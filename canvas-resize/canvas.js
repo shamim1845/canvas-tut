@@ -22,11 +22,11 @@ console.log(canvas);
 // c.fillStyle = "blue";
 // const FourthPlayerBoard = c.fillRect(100, 400, 100, 100);
 
-// center
+// // center
 // c.fillStyle = "#dbcacaff";
 // c.fillRect(200, 200, 200, 200);
 
-// Line
+// // Line
 // c.beginPath();
 // c.moveTo(100, 100);
 // c.lineTo(500, 100);
@@ -37,11 +37,11 @@ console.log(canvas);
 // c.strokeStyle = "black";
 // c.stroke();
 
-// Arc / Circle
-// for (let i = 0; i < 200; i++) {
+// // Arc / Circle
+// for (let i = 0; i < 2000; i++) {
 //   const x = Math.random() * window.innerWidth;
 //   const y = Math.random() * window.innerHeight;
-//   const radius = Math.random() * 30;
+//   const radius = Math.random() * 3;
 //   const strokeColor = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${
 //     Math.random() * 255
 //   })`;
@@ -91,6 +91,8 @@ class Circle {
 
     this.x += this.dx;
     this.y += this.dy;
+    this.radius -= 0.1; // shrink on bounce
+    if (this.radius < 3) this.radius = 3; // minimum size
   }
 }
 
@@ -103,21 +105,26 @@ function randomColor() {
 }
 
 // create many circles
-const circles = [];
-const CIRCLE_COUNT = 250; // change this number to add/remove circles
-for (let i = 0; i < CIRCLE_COUNT; i++) {
-  const radius = Math.random() * 30 + 8;
-  const x = Math.random() * (canvas.width - radius * 2) + radius;
-  const y = Math.random() * (canvas.height - radius * 2) + radius;
-  // velocity between -3 and 3 but not zero
-  let dx = (Math.random() - 0.5) * 2;
-  let dy = (Math.random() - 0.5) * 2;
-  if (Math.abs(dx) < 0.5) dx = dx < 0 ? -0.5 : 0.5;
-  if (Math.abs(dy) < 0.5) dy = dy < 0 ? -0.5 : 0.5;
-  const circle = new Circle(x, y, dx, dy, radius);
-  circle.color = randomColor();
-  circles.push(circle);
+let circles = [];
+const CIRCLE_COUNT = 550; // change this number to add/remove circles
+
+function initCircles() {
+  for (let i = 0; i < CIRCLE_COUNT; i++) {
+    const radius = Math.random() * 1 + 3;
+    const x = Math.random() * (canvas.width - radius * 2) + radius;
+    const y = Math.random() * (canvas.height - radius * 2) + radius;
+    // velocity between -3 and 3 but not zero
+    let dx = (Math.random() - 0.5) * 2;
+    let dy = (Math.random() - 0.5) * 2;
+    if (Math.abs(dx) < 0.5) dx = dx < 0 ? -0.5 : 0.5;
+    if (Math.abs(dy) < 0.5) dy = dy < 0 ? -0.5 : 0.5;
+    const circle = new Circle(x, y, dx, dy, radius);
+    circle.color = randomColor();
+    circles.push(circle);
+  }
 }
+
+initCircles();
 
 // single animation loop for all circles
 function animateAll() {
@@ -134,16 +141,48 @@ animateAll();
 // handle resize: update canvas and reposition circles inside bounds
 window.addEventListener("resize", function () {
   resizeCanvas();
+  circles = [];
+  initCircles();
   // ensure circles remain inside the new canvas size
+  // for (const circ of circles) {
+  //   circ.x = Math.max(
+  //     circ.radius,
+  //     Math.min(circ.x, canvas.width - circ.radius)
+  //   );
+  //   circ.y = Math.max(
+  //     circ.radius,
+  //     Math.min(circ.y, canvas.height - circ.radius)
+  //   );
+  // }
+});
+
+const mouse = { x: null, y: null };
+
+window.addEventListener("mousemove", function (event) {
+  console.log(event);
+
+  mouse.x = event.clientX;
+  mouse.y = event.clientY;
+  // clear from mouse position
   for (const circ of circles) {
-    circ.x = Math.max(
-      circ.radius,
-      Math.min(circ.x, canvas.width - circ.radius)
-    );
-    circ.y = Math.max(
-      circ.radius,
-      Math.min(circ.y, canvas.height - circ.radius)
-    );
+    if (
+      circ.x < mouse.x + 60 &&
+      circ.x > mouse.x - 60 &&
+      circ.y > mouse.y - 60 &&
+      circ.y < mouse.y + 60
+    ) {
+      circ.radius += 3;
+
+      if (circ.radius > 30) circ.radius = 30;
+    } else {
+      // shrink back if no longer near mouse
+      // circ.radius -= 1;
+      // if (circ.radius < 3) circ.radius = 3;
+    }
+
+    if (circ.x === mouse.x && circ.y === mouse.y) {
+      circ.color = "black";
+    }
   }
 });
 
